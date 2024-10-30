@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (translations[key]) {
                 if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
                     element.placeholder = translations[key];
+                } else if (element.tagName === 'OPTION') {
+                    element.textContent = translations[key];
                 } else {
                     element.textContent = translations[key];
                 }
@@ -33,5 +35,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Load default language
-    loadTranslations('en');
+    loadTranslations(languageSelect.value);
 });

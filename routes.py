@@ -27,13 +27,7 @@ def serve_translations(language):
         if language not in ['en', 'fr']:
             return jsonify({}), 404
             
-        translations_file = os.path.join('static', 'translations', f'{language}.json')
-        
-        if not os.path.exists(translations_file):
-            logger.error(f"Translation file not found: {translations_file}")
-            return jsonify({}), 404
-            
-        return send_from_directory('static/translations', f'{language}.json', mimetype='application/json')
+        return send_from_directory('translations', f'{language}.json', mimetype='application/json')
     except Exception as e:
         logger.error(f"Error serving translation: {str(e)}")
         return jsonify({}), 500

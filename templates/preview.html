@@ -49,67 +49,68 @@
                     <h4 data-lang="generated_content">Generated Content</h4>
                     <div class="bg-dark p-3 rounded">
                         {% if content.generated_content %}
-                            {% set content_json = content.generated_content | tojson | safe %}
-                            {% set parsed_content = content_json | fromjson %}
+                            {% set content_obj = content.generated_content | tojson | safe %}
                             <div class="generated-content">
-                                <h5 class="text-primary">{{ parsed_content.title }}</h5>
-                                <p>{{ parsed_content.description }}</p>
+                                {% set parsed = content_obj | replace('"', '') | replace("'", '"') | replace('True', 'true') | replace('False', 'false') %}
+                                {% set data = parsed | tojson | safe %}
+                                <h5 class="text-primary">{{ data.title if data.title else 'Title not available' }}</h5>
+                                <p>{{ data.description if data.description else 'Description not available' }}</p>
                                 
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <h6 class="text-primary">Hashtags</h6>
-                                            <p>{{ parsed_content.hashtags | join(' ') }}</p>
+                                            <p>{{ data.hashtags | join(' ') if data.hashtags else 'No hashtags available' }}</p>
                                         </div>
                                         
                                         <div class="mb-3">
                                             <h6 class="text-primary">Target Audience</h6>
-                                            <p>{{ parsed_content.target_audience }}</p>
+                                            <p>{{ data.target_audience if data.target_audience else 'Target audience not specified' }}</p>
                                         </div>
                                         
                                         <div class="mb-3">
                                             <h6 class="text-primary">Platform Tips</h6>
-                                            <p>{{ parsed_content.platform_tips }}</p>
+                                            <p>{{ data.platform_tips if data.platform_tips else 'No platform tips available' }}</p>
                                         </div>
                                     </div>
                                     
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <h6 class="text-primary">Content Length</h6>
-                                            <p>{{ parsed_content.content_length }}</p>
+                                            <p>{{ data.content_length if data.content_length else 'Length not specified' }}</p>
                                         </div>
                                         
-                                        {% if parsed_content.hooks %}
+                                        {% if data.hooks %}
                                         <div class="mb-3">
                                             <h6 class="text-primary">Hooks</h6>
                                             <ul class="list-unstyled">
-                                                {% for hook in parsed_content.hooks %}
+                                                {% for hook in data.hooks %}
                                                 <li>• {{ hook }}</li>
                                                 {% endfor %}
                                             </ul>
                                         </div>
                                         {% endif %}
                                         
-                                        {% if parsed_content.engagement_strategies %}
+                                        {% if data.engagement_strategies %}
                                         <div class="mb-3">
                                             <h6 class="text-primary">Engagement Strategies</h6>
                                             <ul class="list-unstyled">
-                                                {% for strategy in parsed_content.engagement_strategies %}
+                                                {% for strategy in data.engagement_strategies %}
                                                 <li>• {{ strategy }}</li>
                                                 {% endfor %}
                                             </ul>
                                         </div>
                                         {% endif %}
                                         
-                                        {% if parsed_content.viral_potential_score %}
+                                        {% if data.viral_potential_score %}
                                         <div class="mb-3">
                                             <h6 class="text-primary">Viral Potential Score</h6>
                                             <div class="progress">
                                                 <div class="progress-bar" role="progressbar" 
-                                                     style="width: {{ parsed_content.viral_potential_score * 10 }}%"
-                                                     aria-valuenow="{{ parsed_content.viral_potential_score }}"
+                                                     style="width: {{ data.viral_potential_score * 10 }}%"
+                                                     aria-valuenow="{{ data.viral_potential_score }}"
                                                      aria-valuemin="0" aria-valuemax="10">
-                                                    {{ parsed_content.viral_potential_score }}/10
+                                                    {{ data.viral_potential_score }}/10
                                                 </div>
                                             </div>
                                         </div>
