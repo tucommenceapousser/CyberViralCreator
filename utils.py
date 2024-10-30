@@ -41,63 +41,45 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
         "instagram": "focus on visually appealing content, use Instagram-specific features"
     }
 
-    messages = [
-        {
-            "role": "system",
-            "content": f"You are a content specialist for {platform.upper()}. "
-                      f"Create content in {language.upper()} with a {tone} tone. "
-                      f"Target length: {length_guides[length]}. "
-                      f"Focus on {platform_specifics[platform]}."
-        },
-        {
-            "role": "user",
-            "content": f"Create viral content ideas for a {file_type} file with theme '{theme}'. "
-                      f"Include platform-specific optimization tips and engagement strategies."
-        }
-    ]
-    
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4",
-            messages=messages
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a content specialist. Generate viral content ideas in JSON format with the following fields: "
+                        "title, description, hashtags (as array), target_audience, platform_tips, and content_length. "
+                        f"Platform: {platform.upper()}, Language: {language.upper()}, Tone: {tone}, "
+                        f"Length: {length_guides[length]}"
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"Create viral content ideas for a {file_type} file with theme '{theme}'. "
+                              f"Focus on {platform_specifics[platform]}. "
+                              "Return only valid JSON."
+                }
+            ]
         )
         
-        content = response.choices[0].message.content
-        # Validate JSON structure
-        parsed_content = json.loads(content)
-        required_fields = ['title', 'description', 'hashtags', 'target_audience']
+        content = response.choices[0].message.content.strip()
+        # Add platform-specific recommendations if not present in the response
+        response_data = json.loads(content)
+        if 'platform_tips' not in response_data:
+            response_data['platform_tips'] = platform_specifics[platform]
+        if 'content_length' not in response_data:
+            response_data['content_length'] = length_guides[length]
+            
+        return json.dumps(response_data)
         
-        for field in required_fields:
-            if field not in parsed_content:
-                raise ValueError(f"Missing required field: {field}")
-        
-        if not isinstance(parsed_content['hashtags'], list):
-            parsed_content['hashtags'] = [parsed_content['hashtags']]
-
-        # Add additional platform-specific recommendations
-        parsed_content['platform_tips'] = platform_specifics[platform]
-        parsed_content['content_length'] = length_guides[length]
-        
-        logger.info("Successfully generated viral content")
-        return json.dumps(parsed_content)
-        
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse OpenAI response as JSON: {str(e)}")
-        return json.dumps({
-            "title": "Error Processing Content",
-            "description": "Failed to generate content. Please try again.",
-            "hashtags": ["#error"],
-            "target_audience": "N/A",
-            "platform_tips": "N/A",
-            "content_length": "N/A"
-        })
     except Exception as e:
-        logger.error(f"OpenAI API error details: {str(e)}")
+        logger.error(f"OpenAI API error: {str(e)}")
         return json.dumps({
             "title": "API Error",
-            "description": "Failed to generate content due to API error. Please try again later.",
+            "description": "Failed to generate content. Please try again later.",
             "hashtags": ["#error"],
             "target_audience": "N/A",
-            "platform_tips": "N/A",
-            "content_length": "N/A"
+            "platform_tips": platform_specifics.get(platform, "N/A"),
+            "content_length": length_guides.get(length, "N/A")
         })

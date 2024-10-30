@@ -21,14 +21,14 @@ def serve_translations(language):
         if language not in ['en', 'fr']:
             return jsonify({}), 404
             
-        translations_dir = os.path.join('static', 'translations')
+        translations_dir = 'translations'
         translations_file = os.path.join(translations_dir, f'{language}.json')
         
         if not os.path.exists(translations_file):
             logger.error(f"Translation file not found: {translations_file}")
             return jsonify({}), 404
             
-        return send_from_directory(translations_dir, f'{language}.json', mimetype='application/json')
+        return send_from_directory('translations', f'{language}.json', mimetype='application/json')
     except Exception as e:
         logger.error(f"Error serving translation: {str(e)}")
         return jsonify({}), 500
@@ -75,13 +75,6 @@ def upload_file():
             length=length,
             language=language
         )
-        
-        try:
-            parsed_content = json.loads(generated_content)
-            logger.info("Successfully parsed generated content as JSON")
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse OpenAI response as JSON: {str(e)}")
-            return jsonify({'error': 'Error processing content generation response'}), 500
         
         content = Content(
             original_filename=file.filename,
