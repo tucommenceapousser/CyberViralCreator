@@ -17,6 +17,14 @@ from media_utils import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+@app.route('/translations/<lang>.json')
+def serve_translations(lang):
+    try:
+        return send_from_directory('translations', f'{lang}.json', mimetype='application/json')
+    except Exception as e:
+        logger.error(f"Error serving translation file for language {lang}: {str(e)}")
+        return jsonify({'error': 'Translation file not found'}), 404
+
 @app.route('/')
 def index():
     return render_template('index.html')

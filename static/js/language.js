@@ -17,7 +17,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fallback to English if translation fails
             if (lang !== 'en') {
                 console.log('Falling back to English translations');
-                loadTranslations('en');
+                await loadTranslations('en');
+            } else {
+                // Show error message to user
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-warning';
+                alertDiv.textContent = 'Failed to load translations. Some text may appear in English.';
+                document.querySelector('main').prepend(alertDiv);
+                setTimeout(() => alertDiv.remove(), 5000);
             }
         }
     }
