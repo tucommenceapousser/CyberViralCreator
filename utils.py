@@ -22,21 +22,37 @@ def generate_secure_filename(filename):
     filename_without_ext, extension = os.path.splitext(secure_name)
     return f"{filename_without_ext}_{str(uuid.uuid4())}{extension}"
 
-def generate_viral_content(theme, file_type):
+def generate_viral_content(theme, file_type, tone="professional", platform="tiktok", length="short", language="en"):
     """
-    Generate viral content ideas using OpenAI API
-    Returns a JSON string containing title, description, hashtags, and target audience
+    Generate viral content ideas using OpenAI API with enhanced parameters
+    Returns a JSON string containing title, description, hashtags, target audience, and platform-specific recommendations
     """
     logger.info(f"Generating viral content for {file_type} file with theme: {theme}")
     
+    length_guides = {
+        "short": "30-60 seconds",
+        "medium": "1-3 minutes",
+        "long": "3-5 minutes"
+    }
+
+    platform_specifics = {
+        "tiktok": "focus on trending sounds, quick cuts, and viral challenges",
+        "youtube": "include SEO-friendly title and description, emphasize longer engagement",
+        "instagram": "focus on visually appealing content, use Instagram-specific features"
+    }
+
     messages = [
         {
             "role": "system",
-            "content": "You are a content specialist. Respond only with JSON format containing title, description, hashtags (as array), and target_audience."
+            "content": f"You are a content specialist for {platform.upper()}. "
+                      f"Create content in {language.upper()} with a {tone} tone. "
+                      f"Target length: {length_guides[length]}. "
+                      f"Focus on {platform_specifics[platform]}."
         },
         {
             "role": "user",
-            "content": f"Create viral content ideas for a {file_type} file with theme '{theme}'. Format the response as JSON with title, description, hashtags array, and target_audience fields."
+            "content": f"Create viral content ideas for a {file_type} file with theme '{theme}'. "
+                      f"Include platform-specific optimization tips and engagement strategies."
         }
     ]
     
@@ -57,6 +73,10 @@ def generate_viral_content(theme, file_type):
         
         if not isinstance(parsed_content['hashtags'], list):
             parsed_content['hashtags'] = [parsed_content['hashtags']]
+
+        # Add additional platform-specific recommendations
+        parsed_content['platform_tips'] = platform_specifics[platform]
+        parsed_content['content_length'] = length_guides[length]
         
         logger.info("Successfully generated viral content")
         return json.dumps(parsed_content)
@@ -67,7 +87,9 @@ def generate_viral_content(theme, file_type):
             "title": "Error Processing Content",
             "description": "Failed to generate content. Please try again.",
             "hashtags": ["#error"],
-            "target_audience": "N/A"
+            "target_audience": "N/A",
+            "platform_tips": "N/A",
+            "content_length": "N/A"
         })
     except Exception as e:
         logger.error(f"OpenAI API error details: {str(e)}")
@@ -75,5 +97,7 @@ def generate_viral_content(theme, file_type):
             "title": "API Error",
             "description": "Failed to generate content due to API error. Please try again later.",
             "hashtags": ["#error"],
-            "target_audience": "N/A"
+            "target_audience": "N/A",
+            "platform_tips": "N/A",
+            "content_length": "N/A"
         })

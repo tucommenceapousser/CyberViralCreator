@@ -21,7 +21,7 @@ def serve_translations(language):
         if language not in ['en', 'fr']:
             return jsonify({}), 404
             
-        translations_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'translations')
+        translations_dir = os.path.join('static', 'translations')
         translations_file = os.path.join(translations_dir, f'{language}.json')
         
         if not os.path.exists(translations_file):
@@ -47,6 +47,10 @@ def upload_file():
         
         file = request.files['file']
         theme = request.form.get('theme', 'anonymous')
+        tone = request.form.get('tone', 'professional')
+        platform = request.form.get('platform', 'tiktok')
+        length = request.form.get('length', 'short')
+        language = request.form.get('language', 'en')
         
         if not file or file.filename == '':
             logger.warning("Empty filename provided")
@@ -63,7 +67,14 @@ def upload_file():
         
         file_type = file.filename.rsplit('.', 1)[1].lower()
         logger.info(f"Generating content for file type: {file_type}")
-        generated_content = generate_viral_content(theme, file_type)
+        generated_content = generate_viral_content(
+            theme=theme,
+            file_type=file_type,
+            tone=tone,
+            platform=platform,
+            length=length,
+            language=language
+        )
         
         try:
             parsed_content = json.loads(generated_content)

@@ -65,8 +65,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     contentDisplay.innerHTML = `
                         <h5>${content.title || 'Title not available'}</h5>
                         <p>${content.description || 'Description not available'}</p>
-                        <p><strong>Hashtags:</strong> ${content.hashtags || 'No hashtags available'}</p>
+                        <p><strong>Hashtags:</strong> ${content.hashtags ? content.hashtags.join(' ') : 'No hashtags available'}</p>
                         <p><strong>Target Audience:</strong> ${content.target_audience || 'Target audience not specified'}</p>
+                        <p><strong>Platform Tips:</strong> ${content.platform_tips || 'No platform tips available'}</p>
+                        <p><strong>Recommended Length:</strong> ${content.content_length || 'Length not specified'}</p>
                     `;
                     
                     previewLink.href = `/preview/${data.id}`;
