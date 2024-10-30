@@ -51,19 +51,18 @@ def extract_audio_from_video(video_path, output_path=None):
     try:
         if not output_path:
             output_path = os.path.splitext(video_path)[0] + '.mp3'
-        
+            
         if not check_disk_space(os.path.getsize(video_path)):
             raise Exception("Insufficient disk space for processing")
             
         video = VideoFileClip(video_path)
-        audio = video.audio
-        audio.write_audiofile(output_path, 
-                            bitrate="128k",
-                            fps=44100,
-                            nbytes=2,
-                            codec='libmp3lame')
-        
-        audio.close()
+        if video.audio is not None:
+            video.audio.write_audiofile(output_path, 
+                                    bitrate="128k",
+                                    fps=44100,
+                                    nbytes=2,
+                                    codec='libmp3lame')
+            
         video.close()
         cleanup_temp_files()
         
@@ -103,8 +102,75 @@ def combine_audio_with_video(video_path, audio_path, output_path=None):
         logger.error(f"Error combining audio with video: {str(e)}")
         raise
 
-def add_text_overlay(video_path, text, position='bottom', output_path=None, theme='anonymous'):
-    """Add text overlay to video with optimization"""
+def get_effect_intensity_settings(intensity='medium'):
+    """Get settings based on effect intensity"""
+    intensity_settings = {
+        'low': {
+            'compression_ratio': 1.5,
+            'filter_frequency': 2000,
+            'effect_opacity': 0.3
+        },
+        'medium': {
+            'compression_ratio': 2.0,
+            'filter_frequency': 3000,
+            'effect_opacity': 0.6
+        },
+        'high': {
+            'compression_ratio': 2.5,
+            'filter_frequency': 4000,
+            'effect_opacity': 0.9
+        }
+    }
+    return intensity_settings.get(intensity, intensity_settings['medium'])
+
+def process_audio(audio_path, theme='anonymous', intensity='medium', output_path=None):
+    """Process audio with optimization and intensity settings"""
+    try:
+        if not output_path:
+            output_path = os.path.splitext(audio_path)[0] + '_processed.mp3'
+            
+        if not check_disk_space(os.path.getsize(audio_path)):
+            raise Exception("Insufficient disk space for processing")
+        
+        logger.info(f"Processing audio with theme: {theme}, intensity: {intensity}")
+        
+        # Load and normalize audio
+        audio = AudioSegment.from_file(audio_path)
+        audio = normalize(audio)
+        
+        # Get effect settings based on intensity
+        settings = get_effect_intensity_settings(intensity)
+        
+        if theme == 'anonymous':
+            audio = audio.low_pass_filter(settings['filter_frequency'])
+            audio = compress_dynamic_range(audio, ratio=settings['compression_ratio'])
+        elif theme == 'cyber':
+            audio = audio.high_pass_filter(settings['filter_frequency'] - 1000)
+            audio = audio.low_pass_filter(settings['filter_frequency'] + 1000)
+            audio = compress_dynamic_range(audio, ratio=settings['compression_ratio'])
+        elif theme == 'hacking':
+            audio = audio.high_pass_filter(settings['filter_frequency'])
+            audio = compress_dynamic_range(audio, ratio=settings['compression_ratio'])
+        elif theme == 'hacktivism':
+            audio = audio.low_pass_filter(settings['filter_frequency'] - 500)
+            audio = compress_dynamic_range(audio, ratio=settings['compression_ratio'])
+            
+        # Export with optimized settings
+        audio.export(output_path, 
+                    format='mp3',
+                    bitrate='128k',
+                    parameters=["-q:a", "4"])
+        
+        cleanup_temp_files()
+        logger.info(f"Audio processing completed: {output_path}")
+        return output_path
+    except Exception as e:
+        cleanup_temp_files()
+        logger.error(f"Error processing audio: {str(e)}")
+        raise
+
+def add_text_overlay(video_path, text, position='bottom', output_path=None, theme='anonymous', intensity='medium'):
+    """Add text overlay to video with optimization and intensity settings"""
     try:
         if not output_path:
             output_path = os.path.splitext(video_path)[0] + '_with_text.mp4'
@@ -112,35 +178,36 @@ def add_text_overlay(video_path, text, position='bottom', output_path=None, them
         if not check_disk_space(os.path.getsize(video_path)):
             raise Exception("Insufficient disk space for processing")
             
-        # Theme-based text styles (rest of the styles remain the same)
+        logger.info(f"Adding text overlay with theme: {theme}, intensity: {intensity}")
+        
+        # Get effect settings
+        settings = get_effect_intensity_settings(intensity)
+        
+        # Theme-based text styles
         theme_styles = {
             'anonymous': {
                 'color': 'white',
                 'bg_color': 'black',
                 'font': 'Arial',
-                'effect': 'glitch',
-                'fontsize': 30
+                'fontsize': int(30 * settings['effect_opacity'])
             },
             'cyber': {
                 'color': '#00ff00',
                 'bg_color': 'black',
                 'font': 'Arial-Bold',
-                'effect': 'matrix',
-                'fontsize': 36
+                'fontsize': int(36 * settings['effect_opacity'])
             },
             'hacking': {
                 'color': '#00ff00',
                 'bg_color': 'black',
                 'font': 'Courier',
-                'effect': 'terminal',
-                'fontsize': 28
+                'fontsize': int(28 * settings['effect_opacity'])
             },
             'hacktivism': {
                 'color': 'red',
                 'bg_color': 'black',
                 'font': 'Arial-Bold',
-                'effect': 'flicker',
-                'fontsize': 32
+                'fontsize': int(32 * settings['effect_opacity'])
             }
         }
         
@@ -170,49 +237,9 @@ def add_text_overlay(video_path, text, position='bottom', output_path=None, them
         final_video.close()
         cleanup_temp_files()
         
+        logger.info(f"Video processing completed: {output_path}")
         return output_path
     except Exception as e:
         cleanup_temp_files()
         logger.error(f"Error adding text overlay: {str(e)}")
-        raise
-
-def process_audio(audio_path, theme='anonymous', output_path=None):
-    """Process audio with optimization"""
-    try:
-        if not output_path:
-            output_path = os.path.splitext(audio_path)[0] + '_processed.mp3'
-            
-        if not check_disk_space(os.path.getsize(audio_path)):
-            raise Exception("Insufficient disk space for processing")
-            
-        # Load and normalize audio
-        audio = AudioSegment.from_file(audio_path)
-        audio = normalize(audio)
-        
-        # Apply theme-based effects with optimized settings
-        if theme == 'anonymous':
-            audio = audio.low_pass_filter(3000)
-            audio = compress_dynamic_range(audio, ratio=2.0)
-        elif theme == 'cyber':
-            audio = audio.high_pass_filter(1000)
-            audio = audio.low_pass_filter(4000)
-            audio = compress_dynamic_range(audio, ratio=2.5)
-        elif theme == 'hacking':
-            audio = audio.high_pass_filter(2000)
-            audio = compress_dynamic_range(audio, ratio=2.0)
-        elif theme == 'hacktivism':
-            audio = audio.low_pass_filter(2500)
-            audio = compress_dynamic_range(audio, ratio=2.0)
-            
-        # Export with optimized settings
-        audio.export(output_path, 
-                    format='mp3',
-                    bitrate='128k',
-                    parameters=["-q:a", "4"])
-        
-        cleanup_temp_files()
-        return output_path
-    except Exception as e:
-        cleanup_temp_files()
-        logger.error(f"Error processing audio: {str(e)}")
         raise

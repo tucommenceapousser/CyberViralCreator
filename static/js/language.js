@@ -4,14 +4,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadTranslations(lang) {
         try {
-            const response = await fetch(`/static/translations/${lang}.json`);
+            console.log(`Loading translations for language: ${lang}`);
+            const response = await fetch(`/translations/${lang}.json`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             translations = await response.json();
+            console.log('Translations loaded successfully');
             updateContent();
         } catch (error) {
             console.error('Error loading translations:', error);
+            // Fallback to English if translation fails
+            if (lang !== 'en') {
+                console.log('Falling back to English translations');
+                loadTranslations('en');
+            }
         }
     }
 
