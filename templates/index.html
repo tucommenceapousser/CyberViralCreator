@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4" data-lang="upload_title">Upload Media File</h2>
+                
+                <form id="uploadForm" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="file" class="form-label" data-lang="file_label">Choose MP3 or MP4 file</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".mp3,.mp4" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="theme" class="form-label" data-lang="theme_label">Select Theme</label>
+                        <select class="form-select" id="theme" name="theme" required>
+                            <option value="anonymous" data-lang="theme_anonymous">Anonymous</option>
+                            <option value="cyber" data-lang="theme_cyber">Cyber</option>
+                            <option value="hacking" data-lang="theme_hacking">Hacking</option>
+                            <option value="hacktivism" data-lang="theme_hacktivism">Hacktivism</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" data-lang="generate_button">Generate Content</button>
+                    </div>
+                </form>
+
+                <div id="result" class="mt-4 d-none">
+                    <div class="alert alert-success">
+                        <h4 data-lang="generated_content">Generated Content</h4>
+                        <div id="contentDisplay"></div>
+                        <div class="mt-3">
+                            <a id="previewLink" href="#" class="btn btn-info me-2" data-lang="preview_button">Preview</a>
+                            <a id="downloadLink" href="#" class="btn btn-success" data-lang="download_button">Download</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/main.js"></script>
+{% endblock %}

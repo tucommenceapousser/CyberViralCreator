@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title" data-lang="preview_title">Content Preview</h2>
+                
+                <div class="mb-4">
+                    <h4 data-lang="original_file">Original File</h4>
+                    {% if content.file_type == 'mp3' %}
+                    <audio controls class="w-100">
+                        <source src="/static/uploads/{{ content.stored_filename }}" type="audio/mpeg">
+                    </audio>
+                    {% else %}
+                    <video controls class="w-100">
+                        <source src="/static/uploads/{{ content.stored_filename }}" type="video/mp4">
+                    </video>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <h4 data-lang="generated_content">Generated Content</h4>
+                    <pre class="bg-dark p-3 rounded">{{ content.generated_content }}</pre>
+                </div>
+
+                <div>
+                    <a href="/download/{{ content.id }}" class="btn btn-primary" data-lang="download_button">Download</a>
+                    <a href="/" class="btn btn-secondary ms-2" data-lang="back_button">Back</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
