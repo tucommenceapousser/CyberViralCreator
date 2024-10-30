@@ -25,5 +25,6 @@ with app.app_context():
     import models
     db.create_all()
 
-    # Create upload directory if it doesn't exist
+    # Create required directories if they don't exist
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    os.makedirs(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'translations'), exist_ok=True)

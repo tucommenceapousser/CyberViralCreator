@@ -9,6 +9,11 @@ from utils import allowed_file, generate_secure_filename, generate_viral_content
 def index():
     return render_template('index.html')
 
+@app.route('/translations/<language>.json')
+def serve_translations(language):
+    translations_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'translations')
+    return send_from_directory(translations_dir, f'{language}.json')
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
