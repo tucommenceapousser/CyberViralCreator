@@ -31,22 +31,19 @@ def generate_viral_content(theme, file_type):
     
     messages = [
         {
+            "role": "system",
+            "content": "You are a content specialist. Respond only with JSON format containing title, description, hashtags (as array), and target_audience."
+        },
+        {
             "role": "user",
-            "content": f"""Create viral content ideas for a {file_type} file with theme '{theme}'.
-            Provide the following in a JSON format:
-            - An attention-grabbing title
-            - A compelling description
-            - Relevant hashtags (as an array)
-            - Target audience
-            """
+            "content": f"Create viral content ideas for a {file_type} file with theme '{theme}'. Format the response as JSON with title, description, hashtags array, and target_audience fields."
         }
     ]
     
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4",
-            messages=messages,
-            response_format={"type": "json_object"}
+            messages=messages
         )
         
         content = response.choices[0].message.content
@@ -73,7 +70,7 @@ def generate_viral_content(theme, file_type):
             "target_audience": "N/A"
         })
     except Exception as e:
-        logger.error(f"OpenAI API error: {str(e)}")
+        logger.error(f"OpenAI API error details: {str(e)}")
         return json.dumps({
             "title": "API Error",
             "description": "Failed to generate content due to API error. Please try again later.",
