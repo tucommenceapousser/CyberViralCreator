@@ -11,26 +11,36 @@
                     <div class="col-md-6">
                         <h4 data-lang="original_file">Original File</h4>
                         {% if content.file_type == 'mp3' %}
-                        <audio controls class="w-100">
+                        <audio controls class="w-100 mb-3">
                             <source src="/static/uploads/{{ content.stored_filename }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
                         </audio>
                         {% else %}
-                        <video controls class="w-100">
+                        <video controls class="w-100 mb-3">
                             <source src="/static/uploads/{{ content.stored_filename }}" type="video/mp4">
+                            Your browser does not support the video element.
                         </video>
                         {% endif %}
                     </div>
                     
                     <div class="col-md-6">
                         <h4 data-lang="processed_file">Processed File</h4>
-                        {% if content.file_type == 'mp3' %}
-                        <audio controls class="w-100">
-                            <source src="/static/uploads/{{ content.stored_filename | replace('.mp3', '_processed.mp3') }}" type="audio/mpeg">
-                        </audio>
+                        {% if content.processed_filename %}
+                            {% if content.file_type == 'mp3' %}
+                            <audio controls class="w-100 mb-3">
+                                <source src="/static/uploads/{{ content.processed_filename }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                            {% else %}
+                            <video controls class="w-100 mb-3">
+                                <source src="/static/uploads/{{ content.processed_filename }}" type="video/mp4">
+                                Your browser does not support the video element.
+                            </video>
+                            {% endif %}
                         {% else %}
-                        <video controls class="w-100">
-                            <source src="/static/uploads/{{ content.stored_filename | replace('.mp4', '_with_text.mp4') }}" type="video/mp4">
-                        </video>
+                            <div class="alert alert-info">
+                                No processed file available
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -39,34 +49,85 @@
                     <h4 data-lang="generated_content">Generated Content</h4>
                     <div class="bg-dark p-3 rounded">
                         {% if content.generated_content %}
-                        {% set content_json = content.generated_content | tojson | safe %}
-                        {% set parsed_content = content_json | fromjson %}
-                        <div class="generated-content">
-                            <h5>{{ parsed_content.title }}</h5>
-                            <p>{{ parsed_content.description }}</p>
-                            <p><strong>Hashtags:</strong> {{ parsed_content.hashtags | join(' ') }}</p>
-                            <p><strong>Target Audience:</strong> {{ parsed_content.target_audience }}</p>
-                            <p><strong>Platform Tips:</strong> {{ parsed_content.platform_tips }}</p>
-                            <p><strong>Recommended Length:</strong> {{ parsed_content.content_length }}</p>
-                            {% if parsed_content.hooks %}
-                            <p><strong>Hooks:</strong> {{ parsed_content.hooks | join(', ') }}</p>
-                            {% endif %}
-                            {% if parsed_content.engagement_strategies %}
-                            <p><strong>Engagement Strategies:</strong> {{ parsed_content.engagement_strategies | join(', ') }}</p>
-                            {% endif %}
-                            {% if parsed_content.viral_potential_score %}
-                            <p><strong>Viral Potential Score:</strong> {{ parsed_content.viral_potential_score }}/10</p>
-                            {% endif %}
-                        </div>
+                            {% set content_json = content.generated_content | tojson | safe %}
+                            {% set parsed_content = content_json | fromjson %}
+                            <div class="generated-content">
+                                <h5 class="text-primary">{{ parsed_content.title }}</h5>
+                                <p>{{ parsed_content.description }}</p>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">Hashtags</h6>
+                                            <p>{{ parsed_content.hashtags | join(' ') }}</p>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">Target Audience</h6>
+                                            <p>{{ parsed_content.target_audience }}</p>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">Platform Tips</h6>
+                                            <p>{{ parsed_content.platform_tips }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">Content Length</h6>
+                                            <p>{{ parsed_content.content_length }}</p>
+                                        </div>
+                                        
+                                        {% if parsed_content.hooks %}
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">Hooks</h6>
+                                            <ul class="list-unstyled">
+                                                {% for hook in parsed_content.hooks %}
+                                                <li>• {{ hook }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if parsed_content.engagement_strategies %}
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">Engagement Strategies</h6>
+                                            <ul class="list-unstyled">
+                                                {% for strategy in parsed_content.engagement_strategies %}
+                                                <li>• {{ strategy }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if parsed_content.viral_potential_score %}
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">Viral Potential Score</h6>
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ parsed_content.viral_potential_score * 10 }}%"
+                                                     aria-valuenow="{{ parsed_content.viral_potential_score }}"
+                                                     aria-valuemin="0" aria-valuemax="10">
+                                                    {{ parsed_content.viral_potential_score }}/10
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         {% else %}
-                        <p>No content generated yet.</p>
+                            <p>No content generated yet.</p>
                         {% endif %}
                     </div>
                 </div>
 
-                <div>
-                    <a href="/download/{{ content.id }}" class="btn btn-primary" data-lang="download_button">Download</a>
-                    <a href="/" class="btn btn-secondary ms-2" data-lang="back_button">Back</a>
+                <div class="d-flex justify-content-between">
+                    <a href="/" class="btn btn-secondary" data-lang="back_button">Back</a>
+                    <a href="/download/{{ content.id }}" class="btn btn-primary" data-lang="download_button">
+                        Download Processed File
+                    </a>
                 </div>
             </div>
         </div>

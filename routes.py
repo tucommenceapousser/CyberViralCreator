@@ -60,7 +60,10 @@ def upload_file():
         
         uploaded_files = []
         transcriptions = []
+        mp3_files = []
+        mp4_files = []
         
+        # First pass: Save all files and categorize them
         for file in files:
             if not file or not file.filename:
                 continue
@@ -76,50 +79,39 @@ def upload_file():
             file.save(file_path)
             
             file_type = file.filename.rsplit('.', 1)[1].lower()
-            processed_path = None
             
-            # Process files based on type and theme
-            try:
-                if file_type == 'mp4':
-                    # Extract audio for transcription
-                    audio_path = extract_audio_from_video(file_path)
-                    transcription = transcribe_audio(audio_path)
-                    transcriptions.append(transcription)
-                    
-                    # Process video with enhanced theme-based effects
-                    text_content = "Content loading..." # Placeholder until content is generated
-                    processed_path = add_text_overlay(
-                        file_path,
-                        text_content,
-                        theme=theme,
-                        position='bottom' if theme in ['anonymous', 'cyber'] else 'top'
-                    )
-                elif file_type == 'mp3':
-                    transcription = transcribe_audio(file_path)
-                    transcriptions.append(transcription)
-                    
-                    # Process audio with enhanced theme-based effects
-                    processed_path = process_audio(file_path, theme=theme)
-                    
-            except Exception as e:
-                logger.error(f"Error processing file {filename}: {str(e)}")
-                continue
+            # Categorize files
+            if file_type == 'mp3':
+                mp3_files.append(file_path)
+            elif file_type == 'mp4':
+                mp4_files.append(file_path)
             
             uploaded_files.append({
                 'original_path': file_path,
-                'processed_path': processed_path,
                 'file_type': file_type,
                 'filename': filename
             })
-        
-        if not uploaded_files:
-            return jsonify({'error': 'No valid files were uploaded'}), 400
-        
+
+        # Generate content first to use in overlays
+        # Get transcriptions for content generation
+        for file_info in uploaded_files:
+            try:
+                if file_info['file_type'] == 'mp4':
+                    audio_path = extract_audio_from_video(file_info['original_path'])
+                    transcription = transcribe_audio(audio_path)
+                    transcriptions.append(transcription)
+                elif file_info['file_type'] == 'mp3':
+                    transcription = transcribe_audio(file_info['original_path'])
+                    transcriptions.append(transcription)
+            except Exception as e:
+                logger.error(f"Error getting transcription: {str(e)}")
+                continue
+
         # Generate enhanced content using combined transcriptions
         combined_transcription = " ".join(transcriptions) if transcriptions else None
         generated_content = generate_viral_content(
             theme=theme,
-            file_type=uploaded_files[0]['file_type'],
+            file_type=uploaded_files[0]['file_type'] if uploaded_files else 'mp4',
             tone=tone,
             platform=platform,
             length=length,
@@ -127,9 +119,78 @@ def upload_file():
             transcription=combined_transcription
         )
         
+        try:
+            content_data = json.loads(generated_content)
+            overlay_text = f"{content_data['title']}\n{content_data['hooks'][0] if content_data.get('hooks') else ''}"
+        except Exception as e:
+            logger.error(f"Error parsing generated content: {str(e)}")
+            overlay_text = "Generated Content"
+
+        # Process files based on type and theme
+        processed_files = []
+        
+        # First process individual files
+        for file_info in uploaded_files:
+            try:
+                processed_path = None
+                if file_info['file_type'] == 'mp4':
+                    # Add text overlay to video
+                    processed_path = add_text_overlay(
+                        file_info['original_path'],
+                        overlay_text,
+                        theme=theme,
+                        position='bottom' if theme in ['anonymous', 'cyber'] else 'top'
+                    )
+                elif file_info['file_type'] == 'mp3':
+                    # Process audio with theme-based effects
+                    processed_path = process_audio(file_info['original_path'], theme=theme)
+                
+                if processed_path:
+                    processed_files.append({
+                        'original_path': file_info['original_path'],
+                        'processed_path': processed_path,
+                        'file_type': file_info['file_type'],
+                        'filename': file_info['filename']
+                    })
+                    
+            except Exception as e:
+                logger.error(f"Error processing file {file_info['filename']}: {str(e)}")
+                continue
+        
+        # If we have both MP3 and MP4 files, combine them
+        if mp3_files and mp4_files:
+            try:
+                # Use the first MP3 and MP4 files for combination
+                combined_path = combine_audio_with_video(
+                    mp4_files[0],
+                    process_audio(mp3_files[0], theme=theme)  # Process audio before combining
+                )
+                
+                # Add overlay to combined video
+                final_path = add_text_overlay(
+                    combined_path,
+                    overlay_text,
+                    theme=theme,
+                    position='bottom' if theme in ['anonymous', 'cyber'] else 'top'
+                )
+                
+                processed_files.append({
+                    'original_path': mp4_files[0],
+                    'processed_path': final_path,
+                    'file_type': 'mp4',
+                    'filename': os.path.basename(final_path),
+                    'is_combined': True
+                })
+                
+            except Exception as e:
+                logger.error(f"Error combining files: {str(e)}")
+        
+        if not processed_files:
+            return jsonify({'error': 'No files were successfully processed'}), 400
+        
         # Save to database
         content_entries = []
-        for file_info in uploaded_files:
+        for file_info in processed_files:
             processed_filename = os.path.basename(file_info['processed_path']) if file_info['processed_path'] else None
             new_content = Content()
             new_content.original_filename = file_info['filename']
@@ -145,28 +206,13 @@ def upload_file():
         db.session.commit()
         logger.info(f"Content saved to database")
         
-        # Update processed files with generated content
-        try:
-            content_data = json.loads(generated_content)
-            for file_info in uploaded_files:
-                if file_info['file_type'] == 'mp4' and file_info['processed_path']:
-                    # Update video overlay with actual content
-                    add_text_overlay(
-                        file_info['original_path'],
-                        f"{content_data['title']}\n{content_data['hooks'][0] if content_data.get('hooks') else ''}",
-                        theme=theme,
-                        position='bottom' if theme in ['anonymous', 'cyber'] else 'top',
-                        output_path=file_info['processed_path']
-                    )
-        except Exception as e:
-            logger.error(f"Error updating processed files with content: {str(e)}")
-        
         return jsonify({
             'content': generated_content,
             'files': [{
                 'id': content.id,
                 'original_filename': content.original_filename,
-                'file_type': content.file_type
+                'file_type': content.file_type,
+                'is_combined': getattr(content, 'is_combined', False)
             } for content in content_entries],
             'transcription': combined_transcription if combined_transcription else None
         })
