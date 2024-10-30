@@ -64,6 +64,44 @@
                         </select>
                     </div>
 
+                    <!-- New Advanced Parameters -->
+                    <div class="mb-3">
+                        <label for="content_format" class="form-label" data-lang="format_label">Content Format</label>
+                        <select class="form-select" id="content_format" name="content_format" required>
+                            <option value="story" data-lang="format_story">Story</option>
+                            <option value="tutorial" data-lang="format_tutorial">Tutorial</option>
+                            <option value="review" data-lang="format_review">Review</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="target_emotion" class="form-label" data-lang="emotion_label">Target Emotion</label>
+                        <select class="form-select" id="target_emotion" name="target_emotion" required>
+                            <option value="neutral" data-lang="emotion_neutral">Neutral</option>
+                            <option value="excitement" data-lang="emotion_excitement">Excitement</option>
+                            <option value="curiosity" data-lang="emotion_curiosity">Curiosity</option>
+                            <option value="surprise" data-lang="emotion_surprise">Surprise</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="call_to_action" class="form-label" data-lang="cta_label">Call to Action</label>
+                        <select class="form-select" id="call_to_action" name="call_to_action" required>
+                            <option value="follow" data-lang="cta_follow">Follow</option>
+                            <option value="share" data-lang="cta_share">Share</option>
+                            <option value="comment" data-lang="cta_comment">Comment</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="effect_intensity" class="form-label" data-lang="effect_label">Effect Intensity</label>
+                        <select class="form-select" id="effect_intensity" name="effect_intensity" required>
+                            <option value="low" data-lang="effect_low">Low</option>
+                            <option value="medium" data-lang="effect_medium">Medium</option>
+                            <option value="high" data-lang="effect_high">High</option>
+                        </select>
+                    </div>
+
                     <div class="progress mb-3 d-none" id="uploadProgress">
                         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
                     </div>

@@ -69,12 +69,16 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('files[]', file);
         });
         
-        // Add other form fields
+        // Add form fields including new parameters
         formData.append('theme', document.getElementById('theme').value);
         formData.append('tone', document.getElementById('tone').value);
         formData.append('platform', document.getElementById('platform').value);
         formData.append('length', document.getElementById('length').value);
         formData.append('language', document.getElementById('language').value);
+        formData.append('content_format', document.getElementById('content_format').value);
+        formData.append('target_emotion', document.getElementById('target_emotion').value);
+        formData.append('call_to_action', document.getElementById('call_to_action').value);
+        formData.append('effect_intensity', document.getElementById('effect_intensity').value);
         
         // Remove existing error alert if any
         const errorAlert = document.getElementById('errorAlert');
@@ -107,6 +111,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p><strong>Recommended Length:</strong> ${content.content_length || 'Length not specified'}</p>
                         <p><strong>Hooks:</strong> ${content.hooks ? content.hooks.join(', ') : 'No hooks available'}</p>
                         <p><strong>Engagement Strategies:</strong> ${content.engagement_strategies ? content.engagement_strategies.join(', ') : 'No strategies available'}</p>
+                        <p><strong>Emotional Impact:</strong> ${content.emotional_triggers ? content.emotional_triggers.join(', ') : 'No emotional triggers specified'}</p>
+                        <p><strong>Pacing Guide:</strong> ${content.pacing_guide || 'No pacing guide available'}</p>
+                        <p><strong>Effect Recommendations:</strong> ${content.effect_recommendations ? content.effect_recommendations.join(', ') : 'No effect recommendations available'}</p>
                         <p><strong>Viral Potential Score:</strong> ${content.viral_potential_score || 'Not available'}/10</p>
                     `;
                     

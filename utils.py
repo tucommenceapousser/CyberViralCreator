@@ -39,7 +39,19 @@ def transcribe_audio(file_path):
         raise
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-def generate_viral_content(theme, file_type, tone="professional", platform="tiktok", length="short", language="en", transcription=None):
+def generate_viral_content(
+    theme,
+    file_type,
+    tone="professional",
+    platform="tiktok",
+    length="short",
+    language="en",
+    transcription=None,
+    content_format="story",
+    target_emotion="neutral",
+    call_to_action="follow",
+    effect_intensity="medium"
+):
     """
     Generate viral content ideas using OpenAI API with enhanced parameters and transcription context
     """
@@ -91,27 +103,83 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
         }
     }
 
-    # Theme-based content strategies
+    # Enhanced theme-based content strategies
     theme_strategies = {
         "anonymous": {
             "visual_elements": ["Mask imagery", "Dark backgrounds", "Glitch effects"],
             "storytelling": "Mystery and revelation narrative",
-            "music": "Electronic, bass-heavy background tracks"
+            "music": "Electronic, bass-heavy background tracks",
+            "effect_intensities": {
+                "low": ["Subtle glitch", "Light distortion"],
+                "medium": ["Moderate glitch", "Voice modulation"],
+                "high": ["Heavy glitch", "Full anonymization"]
+            }
         },
         "cyber": {
             "visual_elements": ["Matrix-style effects", "Code snippets", "Futuristic UI"],
             "storytelling": "Technical revelation and future implications",
-            "music": "Synthwave or cyberpunk-style background"
+            "music": "Synthwave or cyberpunk-style background",
+            "effect_intensities": {
+                "low": ["Basic matrix rain", "Simple overlays"],
+                "medium": ["Animated code", "Digital transitions"],
+                "high": ["Full matrix effects", "Complex animations"]
+            }
         },
         "hacking": {
             "visual_elements": ["Terminal interfaces", "Code execution", "System access visuals"],
             "storytelling": "Problem-solution-impact structure",
-            "music": "Intense, suspenseful background tracks"
+            "music": "Intense, suspenseful background tracks",
+            "effect_intensities": {
+                "low": ["Command line overlay", "Basic typing effect"],
+                "medium": ["Multiple terminals", "Code execution"],
+                "high": ["System breach simulation", "Multiple screens"]
+            }
         },
         "hacktivism": {
             "visual_elements": ["Impact statistics", "Call-to-action graphics", "Movement symbols"],
             "storytelling": "Cause-effect-solution narrative",
-            "music": "Dramatic, empowering background music"
+            "music": "Dramatic, empowering background music",
+            "effect_intensities": {
+                "low": ["Simple overlays", "Basic stats"],
+                "medium": ["Animated stats", "Emphasis effects"],
+                "high": ["Full screen transitions", "Dynamic visualizations"]
+            }
+        }
+    }
+
+    # Content format strategies
+    format_strategies = {
+        "story": {
+            "structure": "Setup → Conflict → Resolution",
+            "duration_distribution": "20% setup, 60% conflict, 20% resolution"
+        },
+        "tutorial": {
+            "structure": "Problem → Solution → Implementation → Results",
+            "duration_distribution": "10% problem, 30% solution, 40% implementation, 20% results"
+        },
+        "review": {
+            "structure": "Introduction → Features → Analysis → Verdict",
+            "duration_distribution": "15% intro, 35% features, 35% analysis, 15% verdict"
+        }
+    }
+
+    # Emotional impact strategies
+    emotion_strategies = {
+        "neutral": {
+            "tone": "Balanced and informative",
+            "pacing": "Steady and consistent"
+        },
+        "excitement": {
+            "tone": "High energy and dynamic",
+            "pacing": "Fast-paced with quick cuts"
+        },
+        "curiosity": {
+            "tone": "Mysterious and intriguing",
+            "pacing": "Strategic information revelation"
+        },
+        "surprise": {
+            "tone": "Unexpected and dramatic",
+            "pacing": "Build up to reveal moments"
         }
     }
 
@@ -119,8 +187,9 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
     system_content = (
         "You are an expert viral content strategist specializing in cutting-edge content optimization. "
         f"Generate content optimized for {platform.upper()} in {language.upper()}, "
-        f"incorporating {theme.upper()} theme elements and {tone} tone. "
-        f"Content duration: {length_guides[length]}. "
+        f"incorporating {theme.upper()} theme elements with {tone} tone and {target_emotion} emotional impact. "
+        f"Content duration: {length_guides[length]}, Format: {content_format}, "
+        f"Effect Intensity: {effect_intensity}, Call-to-action: {call_to_action}. "
         f"Follow platform best practices: {platform_specifics[platform]['content_structure']}. "
         "\nAnalyze and include:"
         "\n1. Viral Potential Factors"
@@ -128,6 +197,11 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
         "\n3. Platform-Specific Features"
         "\n4. Theme Integration"
         "\n5. Audience Psychology"
+        "\n6. Emotional Triggers"
+        "\n7. Content Structure"
+        "\n8. Visual Effects"
+        "\n9. Audio Elements"
+        "\n10. Call-to-Action Strategy"
         "\nReturn structured JSON with:"
         "\n- title"
         "\n- description"
@@ -141,6 +215,9 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
         "\n- engagement_strategies"
         "\n- visual_elements"
         "\n- audio_recommendations"
+        "\n- emotional_triggers"
+        "\n- pacing_guide"
+        "\n- effect_recommendations"
         "\n- viral_potential_score (1-10)"
         "\n- improvement_suggestions"
     )
@@ -149,8 +226,11 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
     user_content = [
         f"Create viral content for {file_type} with theme '{theme}'.",
         f"Optimize for {platform} using {theme_strategies[theme]['storytelling']}.",
-        f"Include {theme_strategies[theme]['visual_elements']} elements.",
-        f"Target {length_guides[length]} duration.",
+        f"Format: {format_strategies[content_format]['structure']}.",
+        f"Emotional impact: {emotion_strategies[target_emotion]['tone']}.",
+        f"Effect intensity: {theme_strategies[theme]['effect_intensities'][effect_intensity][0]}.",
+        f"Call-to-action focus: {call_to_action}.",
+        f"Target length: {length_guides[length]}.",
     ]
     
     if transcription:
@@ -175,6 +255,9 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
             "platform_specifics": platform_specifics[platform],
             "theme_strategies": theme_strategies[theme],
             "content_length": length_guides[length],
+            "format_strategy": format_strategies[content_format],
+            "emotion_strategy": emotion_strategies[target_emotion],
+            "effect_intensity": theme_strategies[theme]['effect_intensities'][effect_intensity],
             "language": language,
             "theme": theme
         })

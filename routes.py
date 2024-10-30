@@ -21,17 +21,6 @@ logger = logging.getLogger(__name__)
 def index():
     return render_template('index.html')
 
-@app.route('/translations/<language>.json')
-def serve_translations(language):
-    try:
-        if language not in ['en', 'fr']:
-            return jsonify({}), 404
-            
-        return send_from_directory('translations', f'{language}.json', mimetype='application/json')
-    except Exception as e:
-        logger.error(f"Error serving translation: {str(e)}")
-        return jsonify({}), 500
-
 @app.errorhandler(RequestEntityTooLarge)
 def handle_file_too_large(e):
     return jsonify({'error': 'File size exceeds the 32MB limit'}), 413
@@ -45,12 +34,18 @@ def upload_file():
             logger.warning("No files provided in request")
             return jsonify({'error': 'No files provided'}), 400
         
-        # Get form data
+        # Get enhanced form data with new parameters
         theme = request.form.get('theme', 'anonymous')
         tone = request.form.get('tone', 'professional')
         platform = request.form.get('platform', 'tiktok')
         length = request.form.get('length', 'short')
         language = request.form.get('language', 'en')
+        
+        # New advanced parameters
+        content_format = request.form.get('content_format', 'story')  # story, tutorial, review, etc.
+        target_emotion = request.form.get('target_emotion', 'neutral')  # excitement, curiosity, surprise
+        call_to_action = request.form.get('call_to_action', 'follow')  # follow, share, comment
+        effect_intensity = request.form.get('effect_intensity', 'medium')  # low, medium, high
         
         uploaded_files = []
         transcriptions = []
@@ -101,7 +96,7 @@ def upload_file():
                 logger.error(f"Error getting transcription: {str(e)}")
                 continue
 
-        # Generate enhanced content using combined transcriptions
+        # Generate enhanced content using combined transcriptions and new parameters
         combined_transcription = " ".join(transcriptions) if transcriptions else None
         generated_content = generate_viral_content(
             theme=theme,
@@ -110,7 +105,11 @@ def upload_file():
             platform=platform,
             length=length,
             language=language,
-            transcription=combined_transcription
+            transcription=combined_transcription,
+            content_format=content_format,
+            target_emotion=target_emotion,
+            call_to_action=call_to_action,
+            effect_intensity=effect_intensity
         )
         
         try:
@@ -128,16 +127,21 @@ def upload_file():
             try:
                 processed_path = None
                 if file_info['file_type'] == 'mp4':
-                    # Add text overlay to video
+                    # Add text overlay to video with enhanced parameters
                     processed_path = add_text_overlay(
                         file_info['original_path'],
                         overlay_text,
                         theme=theme,
-                        position='bottom' if theme in ['anonymous', 'cyber'] else 'top'
+                        position='bottom' if theme in ['anonymous', 'cyber'] else 'top',
+                        effect_intensity=effect_intensity
                     )
                 elif file_info['file_type'] == 'mp3':
-                    # Process audio with theme-based effects
-                    processed_path = process_audio(file_info['original_path'], theme=theme)
+                    # Process audio with enhanced parameters
+                    processed_path = process_audio(
+                        file_info['original_path'],
+                        theme=theme,
+                        effect_intensity=effect_intensity
+                    )
                 
                 if processed_path:
                     processed_files.append({
@@ -151,21 +155,28 @@ def upload_file():
                 logger.error(f"Error processing file {file_info['filename']}: {str(e)}")
                 continue
         
-        # If we have both MP3 and MP4 files, combine them
+        # If we have both MP3 and MP4 files, combine them with enhanced processing
         if mp3_files and mp4_files:
             try:
-                # Use the first MP3 and MP4 files for combination
-                combined_path = combine_audio_with_video(
-                    mp4_files[0],
-                    process_audio(mp3_files[0], theme=theme)  # Process audio before combining
+                # Use the first MP3 and MP4 files for combination with enhanced parameters
+                processed_audio = process_audio(
+                    mp3_files[0],
+                    theme=theme,
+                    effect_intensity=effect_intensity
                 )
                 
-                # Add overlay to combined video
+                combined_path = combine_audio_with_video(
+                    mp4_files[0],
+                    processed_audio
+                )
+                
+                # Add enhanced overlay to combined video
                 final_path = add_text_overlay(
                     combined_path,
                     overlay_text,
                     theme=theme,
-                    position='bottom' if theme in ['anonymous', 'cyber'] else 'top'
+                    position='bottom' if theme in ['anonymous', 'cyber'] else 'top',
+                    effect_intensity=effect_intensity
                 )
                 
                 processed_files.append({
@@ -182,7 +193,7 @@ def upload_file():
         if not processed_files:
             return jsonify({'error': 'No files were successfully processed'}), 400
         
-        # Save to database
+        # Save to database with enhanced content
         content_entries = []
         for file_info in processed_files:
             processed_filename = os.path.basename(file_info['processed_path']) if file_info['processed_path'] else None
