@@ -42,7 +42,6 @@ def transcribe_audio(file_path):
 def generate_viral_content(theme, file_type, tone="professional", platform="tiktok", length="short", language="en", transcription=None):
     """
     Generate viral content ideas using OpenAI API with enhanced parameters and transcription context
-    Returns a JSON string containing title, description, hashtags, target audience, and platform-specific recommendations
     """
     logger.info(f"Generating viral content for {file_type} file with theme: {theme}")
     
@@ -52,43 +51,110 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
         "long": "3-5 minutes"
     }
 
+    # Enhanced platform-specific optimization guidelines
     platform_specifics = {
         "tiktok": {
-            "tips": "focus on trending sounds, quick cuts, and viral challenges",
+            "tips": [
+                "Hook viewers in first 3 seconds",
+                "Use trending sounds strategically",
+                "Implement pattern interrupts every 2-3 seconds",
+                "End with strong call-to-action"
+            ],
             "hashtag_count": 5,
-            "style": "fast-paced, engaging, with hook in first 3 seconds"
+            "optimal_posting_times": ["9 AM", "12 PM", "7 PM"],
+            "content_structure": "Hook (3s) → Context (7s) → Main Content (20-30s) → CTA (5s)",
+            "engagement_triggers": ["Duets", "Stitch", "Comment-to-unlock", "Use trending sounds"]
         },
         "youtube": {
-            "tips": "include SEO-friendly title and description, emphasize longer engagement",
+            "tips": [
+                "Craft compelling thumbnail and title",
+                "Include cards and end screens",
+                "Optimize first 30 seconds for retention",
+                "Use chapters for longer content"
+            ],
             "hashtag_count": 8,
-            "style": "structured content with clear sections and call-to-action"
+            "optimal_posting_times": ["3 PM", "6 PM", "9 PM"],
+            "content_structure": "Hook (15s) → Intro (30s) → Main Content → Summary → CTA",
+            "engagement_triggers": ["Poll cards", "End screens", "Pinned comments", "Community posts"]
         },
         "instagram": {
-            "tips": "focus on visually appealing content, use Instagram-specific features",
+            "tips": [
+                "Use carousel posts for higher engagement",
+                "Implement visual storytelling",
+                "Include location tags",
+                "Cross-promote with Reels"
+            ],
             "hashtag_count": 10,
-            "style": "aesthetic focus, story-driven, with carousel options"
+            "optimal_posting_times": ["11 AM", "2 PM", "7 PM"],
+            "content_structure": "Visual hook → Story progression → Value delivery → CTA",
+            "engagement_triggers": ["Save this post", "Share to stories", "Poll stickers", "Quiz stickers"]
         }
     }
 
-    # Build system message with enhanced context
+    # Theme-based content strategies
+    theme_strategies = {
+        "anonymous": {
+            "visual_elements": ["Mask imagery", "Dark backgrounds", "Glitch effects"],
+            "storytelling": "Mystery and revelation narrative",
+            "music": "Electronic, bass-heavy background tracks"
+        },
+        "cyber": {
+            "visual_elements": ["Matrix-style effects", "Code snippets", "Futuristic UI"],
+            "storytelling": "Technical revelation and future implications",
+            "music": "Synthwave or cyberpunk-style background"
+        },
+        "hacking": {
+            "visual_elements": ["Terminal interfaces", "Code execution", "System access visuals"],
+            "storytelling": "Problem-solution-impact structure",
+            "music": "Intense, suspenseful background tracks"
+        },
+        "hacktivism": {
+            "visual_elements": ["Impact statistics", "Call-to-action graphics", "Movement symbols"],
+            "storytelling": "Cause-effect-solution narrative",
+            "music": "Dramatic, empowering background music"
+        }
+    }
+
+    # Build enhanced system message
     system_content = (
-        "You are an expert content strategist specializing in viral content creation. "
-        f"Generate content optimized for {platform.upper()} in {language.upper()}. "
-        f"Content should be {tone} in tone and {length_guides[length]} in duration. "
-        f"Follow platform-specific best practices: {platform_specifics[platform]['style']}. "
-        "Return response in JSON format with fields: "
-        "title, description, hashtags (array), target_audience, hooks (array), "
-        "platform_tips, content_length, engagement_strategies (array), and viral_potential_score (1-10)"
+        "You are an expert viral content strategist specializing in cutting-edge content optimization. "
+        f"Generate content optimized for {platform.upper()} in {language.upper()}, "
+        f"incorporating {theme.upper()} theme elements and {tone} tone. "
+        f"Content duration: {length_guides[length]}. "
+        f"Follow platform best practices: {platform_specifics[platform]['content_structure']}. "
+        "\nAnalyze and include:"
+        "\n1. Viral Potential Factors"
+        "\n2. Engagement Optimization"
+        "\n3. Platform-Specific Features"
+        "\n4. Theme Integration"
+        "\n5. Audience Psychology"
+        "\nReturn structured JSON with:"
+        "\n- title"
+        "\n- description"
+        "\n- hashtags (array)"
+        "\n- target_audience"
+        "\n- hooks (array)"
+        "\n- content_structure"
+        "\n- viral_triggers (array)"
+        "\n- platform_specific_tips"
+        "\n- optimal_posting_times"
+        "\n- engagement_strategies"
+        "\n- visual_elements"
+        "\n- audio_recommendations"
+        "\n- viral_potential_score (1-10)"
+        "\n- improvement_suggestions"
     )
 
-    # Build user message with transcription context if available
+    # Build enhanced user message
     user_content = [
-        f"Create viral content ideas for a {file_type} file with theme '{theme}'.",
-        f"Optimize for {platform_specifics[platform]['tips']}.",
+        f"Create viral content for {file_type} with theme '{theme}'.",
+        f"Optimize for {platform} using {theme_strategies[theme]['storytelling']}.",
+        f"Include {theme_strategies[theme]['visual_elements']} elements.",
+        f"Target {length_guides[length]} duration.",
     ]
     
     if transcription:
-        user_content.append(f"Using this transcription as context: '{transcription}'")
+        user_content.append(f"Context from transcription: '{transcription}'")
         
     try:
         response = openai_client.chat.completions.create(
@@ -98,15 +164,16 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
                 {"role": "user", "content": " ".join(user_content)}
             ],
             temperature=0.7,
-            max_tokens=1000
+            max_tokens=1500
         )
         
         content = response.choices[0].message.content.strip()
         response_data = json.loads(content)
 
-        # Enhance response with platform-specific data
+        # Enhance response with additional platform and theme data
         response_data.update({
             "platform_specifics": platform_specifics[platform],
+            "theme_strategies": theme_strategies[theme],
             "content_length": length_guides[length],
             "language": language,
             "theme": theme
@@ -123,7 +190,6 @@ def generate_viral_content(theme, file_type, tone="professional", platform="tikt
             "target_audience": "N/A",
             "platform_tips": platform_specifics[platform]["tips"],
             "content_length": length_guides[length],
-            "hooks": [],
-            "engagement_strategies": [],
+            "theme_elements": theme_strategies[theme]["visual_elements"],
             "viral_potential_score": 0
         })

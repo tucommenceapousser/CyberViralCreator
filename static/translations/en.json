@@ -1,6 +1,8 @@
 {
-    "upload_title": "Upload Media File",
-    "file_label": "Choose MP3 or MP4 file",
+    "upload_title": "Upload Media Files",
+    "file_label": "Choose MP3 or MP4 files",
+    "file_help": "You can select multiple files. Maximum size: 32MB per file",
+    "selected_files": "Selected Files:",
     "theme_label": "Select Theme",
     "theme_anonymous": "Anonymous",
     "theme_cyber": "Cyber",
@@ -25,5 +27,6 @@
     "download_button": "Download",
     "preview_title": "Content Preview",
     "original_file": "Original File",
+    "processed_file": "Processed File",
     "back_button": "Back"
 }

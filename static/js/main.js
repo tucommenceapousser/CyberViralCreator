@@ -2,16 +2,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('uploadForm');
     const result = document.getElementById('result');
     const contentDisplay = document.getElementById('contentDisplay');
-    const previewLink = document.getElementById('previewLink');
-    const downloadLink = document.getElementById('downloadLink');
-    const fileInput = document.getElementById('file');
+    const previewLinks = document.getElementById('previewLinks');
+    const fileInput = document.getElementById('files');
+    const fileList = document.getElementById('fileList');
+    const selectedFiles = document.getElementById('selectedFiles');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressBar = uploadProgress.querySelector('.progress-bar');
     const maxFileSize = 32 * 1024 * 1024; // 32MB in bytes
-
-    // Add file size warning
-    const fileSizeWarning = document.createElement('small');
-    fileSizeWarning.className = 'text-muted d-block mt-1';
-    fileSizeWarning.textContent = 'Maximum file size: 32MB';
-    fileInput.parentNode.appendChild(fileSizeWarning);
 
     function showError(message, isApiError = false) {
         const existingAlert = document.getElementById('errorAlert');
@@ -26,20 +23,58 @@ document.addEventListener('DOMContentLoaded', function() {
         form.appendChild(alertDiv);
     }
 
-    // Add file size check
-    fileInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file && file.size > maxFileSize) {
-            showError('File size exceeds 32MB limit. Please choose a smaller file.');
-            this.value = '';
+    function updateFileList() {
+        const files = fileInput.files;
+        if (files.length > 0) {
+            selectedFiles.innerHTML = '';
+            fileList.classList.remove('d-none');
+            
+            Array.from(files).forEach(file => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <span>${file.name}</span>
+                    <span class="badge bg-primary rounded-pill">${(file.size / (1024 * 1024)).toFixed(2)} MB</span>
+                `;
+                selectedFiles.appendChild(li);
+                
+                if (file.size > maxFileSize) {
+                    li.classList.add('list-group-item-danger');
+                    showError(`File "${file.name}" exceeds 32MB limit`);
+                }
+            });
+        } else {
+            fileList.classList.add('d-none');
         }
-    });
+    }
+
+    fileInput.addEventListener('change', updateFileList);
 
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const formData = new FormData(form);
+        const formData = new FormData();
         const submitButton = form.querySelector('button[type="submit"]');
+        const files = fileInput.files;
+        
+        // Check if any file exceeds size limit
+        const invalidFiles = Array.from(files).filter(file => file.size > maxFileSize);
+        if (invalidFiles.length > 0) {
+            showError(`Some files exceed the 32MB limit: ${invalidFiles.map(f => f.name).join(', ')}`);
+            return;
+        }
+
+        // Add all files to FormData
+        Array.from(files).forEach(file => {
+            formData.append('files[]', file);
+        });
+        
+        // Add other form fields
+        formData.append('theme', document.getElementById('theme').value);
+        formData.append('tone', document.getElementById('tone').value);
+        formData.append('platform', document.getElementById('platform').value);
+        formData.append('length', document.getElementById('length').value);
+        formData.append('language', document.getElementById('language').value);
         
         // Remove existing error alert if any
         const errorAlert = document.getElementById('errorAlert');
@@ -50,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
         submitButton.disabled = true;
         submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
         result.classList.add('d-none');
+        uploadProgress.classList.remove('d-none');
         
         try {
             const response = await fetch('/upload', {
@@ -69,10 +105,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p><strong>Target Audience:</strong> ${content.target_audience || 'Target audience not specified'}</p>
                         <p><strong>Platform Tips:</strong> ${content.platform_tips || 'No platform tips available'}</p>
                         <p><strong>Recommended Length:</strong> ${content.content_length || 'Length not specified'}</p>
+                        <p><strong>Hooks:</strong> ${content.hooks ? content.hooks.join(', ') : 'No hooks available'}</p>
+                        <p><strong>Engagement Strategies:</strong> ${content.engagement_strategies ? content.engagement_strategies.join(', ') : 'No strategies available'}</p>
+                        <p><strong>Viral Potential Score:</strong> ${content.viral_potential_score || 'Not available'}/10</p>
                     `;
                     
-                    previewLink.href = `/preview/${data.id}`;
-                    downloadLink.href = `/download/${data.id}`;
+                    // Generate preview links for each file
+                    previewLinks.innerHTML = data.files.map(file => `
+                        <div class="mb-2">
+                            <a href="/preview/${file.id}" class="btn btn-info me-2">Preview ${file.original_filename}</a>
+                            <a href="/download/${file.id}" class="btn btn-success">Download ${file.original_filename}</a>
+                        </div>
+                    `).join('');
+                    
                     result.classList.remove('d-none');
                 } catch (parseError) {
                     console.error('Error parsing API response:', parseError);
@@ -88,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } finally {
             submitButton.disabled = false;
             submitButton.innerHTML = 'Generate Content';
+            uploadProgress.classList.add('d-none');
         }
     });
 });

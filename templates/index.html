@@ -5,12 +5,18 @@
     <div class="col-md-8">
         <div class="card">
             <div class="card-body">
-                <h2 class="card-title text-center mb-4" data-lang="upload_title">Upload Media File</h2>
+                <h2 class="card-title text-center mb-4" data-lang="upload_title">Upload Media Files</h2>
                 
                 <form id="uploadForm" class="needs-validation" novalidate>
                     <div class="mb-3">
-                        <label for="file" class="form-label" data-lang="file_label">Choose MP3 or MP4 file</label>
-                        <input type="file" class="form-control" id="file" name="file" accept=".mp3,.mp4" required>
+                        <label for="files" class="form-label" data-lang="file_label">Choose MP3 or MP4 files</label>
+                        <input type="file" class="form-control" id="files" name="files[]" accept=".mp3,.mp4" multiple required>
+                        <small class="text-muted" data-lang="file_help">You can select multiple files. Maximum size: 32MB per file</small>
+                    </div>
+
+                    <div id="fileList" class="mb-3 d-none">
+                        <h5 data-lang="selected_files">Selected Files:</h5>
+                        <ul class="list-group" id="selectedFiles"></ul>
                     </div>
 
                     <div class="mb-3">
@@ -58,19 +64,20 @@
                         </select>
                     </div>
 
+                    <div class="progress mb-3 d-none" id="uploadProgress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary" data-lang="generate_button">Generate Content</button>
                     </div>
                 </form>
 
                 <div id="result" class="mt-4 d-none">
-                    <div class="alert alert-success">
+                    <div class="alert">
                         <h4 data-lang="generated_content">Generated Content</h4>
                         <div id="contentDisplay"></div>
-                        <div class="mt-3">
-                            <a id="previewLink" href="#" class="btn btn-info me-2" data-lang="preview_button">Preview</a>
-                            <a id="downloadLink" href="#" class="btn btn-success" data-lang="download_button">Download</a>
-                        </div>
+                        <div id="previewLinks" class="mt-3"></div>
                     </div>
                 </div>
             </div>

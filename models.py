@@ -8,4 +8,5 @@ class Content(db.Model):
     file_type = db.Column(db.String(10), nullable=False)
     theme = db.Column(db.String(50), nullable=False)
     generated_content = db.Column(db.Text)
+    processed_filename = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

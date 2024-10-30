@@ -1,6 +1,8 @@
 {
-    "upload_title": "Télécharger un fichier multimédia",
-    "file_label": "Choisir un fichier MP3 ou MP4",
+    "upload_title": "Télécharger des fichiers multimédia",
+    "file_label": "Choisir des fichiers MP3 ou MP4",
+    "file_help": "Vous pouvez sélectionner plusieurs fichiers. Taille maximale : 32 Mo par fichier",
+    "selected_files": "Fichiers sélectionnés :",
     "theme_label": "Sélectionner un thème",
     "theme_anonymous": "Anonyme",
     "theme_cyber": "Cyber",
@@ -25,5 +27,6 @@
     "download_button": "Télécharger",
     "preview_title": "Aperçu du contenu",
     "original_file": "Fichier original",
+    "processed_file": "Fichier traité",
     "back_button": "Retour"
 }
