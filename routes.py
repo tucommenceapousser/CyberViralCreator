@@ -1,6 +1,7 @@
 import os
 import json
-from flask import render_template, request, jsonify, send_from_directory
+from flask import render_template, request, jsonify, send_from_directory, abort
+from werkzeug.exceptions import RequestEntityTooLarge
 from app import app, db
 from models import Content
 from utils import allowed_file, generate_secure_filename, generate_viral_content
@@ -14,21 +15,25 @@ def serve_translations(language):
     translations_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'translations')
     return send_from_directory(translations_dir, f'{language}.json')
 
+@app.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
+    return jsonify({'error': 'File size exceeds the 32MB limit'}), 413
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
-    
-    file = request.files['file']
-    theme = request.form.get('theme', 'anonymous')
-    
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
-    
-    if not allowed_file(file.filename):
-        return jsonify({'error': 'Invalid file type'}), 400
-    
     try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        theme = request.form.get('theme', 'anonymous')
+        
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Invalid file type. Only MP3 and MP4 files are allowed'}), 400
+        
         filename = generate_secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
@@ -50,6 +55,8 @@ def upload_file():
             'id': content.id,
             'content': generated_content
         })
+    except RequestEntityTooLarge:
+        return jsonify({'error': 'File size exceeds the 32MB limit'}), 413
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -15,7 +15,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///viral_content.db"
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
 }
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max file size
+app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024  # 32MB max file size
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 
 # Initialize extensions
