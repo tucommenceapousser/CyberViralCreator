@@ -108,7 +108,8 @@ def add_text_overlay(video_path, text, position='bottom', output_path=None, them
         elif style['effect'] == 'terminal':
             text_clip = text_clip.fx(vfx.blackwhite)
         elif style['effect'] == 'flicker':
-            text_clip = text_clip.fx(vfx.painting, saturation=1.6)
+            # Modified flicker effect without painting
+            text_clip = text_clip.fx(vfx.colorx, 1.5).fx(vfx.lum_contrast, lum=0, contrast=1.5)
         
         # Position the text with padding
         if position == 'bottom':
