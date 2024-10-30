@@ -15,22 +15,20 @@ logger = logging.getLogger(__name__)
 def index():
     return render_template('index.html')
 
-@app.route('/static/translations/<language>.json')
+@app.route('/translations/<language>.json')
 def serve_translations(language):
     try:
         if language not in ['en', 'fr']:
             return jsonify({}), 404
             
-        translations_path = os.path.join(app.static_folder, 'translations', f'{language}.json')
-        if not os.path.exists(translations_path):
-            logger.error(f"Translation file not found: {translations_path}")
+        translations_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'translations')
+        translations_file = os.path.join(translations_dir, f'{language}.json')
+        
+        if not os.path.exists(translations_file):
+            logger.error(f"Translation file not found: {translations_file}")
             return jsonify({}), 404
             
-        return send_from_directory(
-            os.path.join(app.static_folder, 'translations'),
-            f'{language}.json',
-            mimetype='application/json'
-        )
+        return send_from_directory(translations_dir, f'{language}.json', mimetype='application/json')
     except Exception as e:
         logger.error(f"Error serving translation: {str(e)}")
         return jsonify({}), 500
