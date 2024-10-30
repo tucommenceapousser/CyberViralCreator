@@ -5,7 +5,7 @@ from flask import render_template, request, jsonify, send_from_directory, abort
 from werkzeug.exceptions import RequestEntityTooLarge
 from app import app, db
 from models import Content
-from utils import allowed_file, generate_secure_filename, generate_viral_content
+from utils import allowed_file, generate_secure_filename, generate_viral_content, transcribe_audio
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -46,12 +46,6 @@ def upload_file():
             return jsonify({'error': 'No file provided'}), 400
         
         file = request.files['file']
-        theme = request.form.get('theme', 'anonymous')
-        tone = request.form.get('tone', 'professional')
-        platform = request.form.get('platform', 'tiktok')
-        length = request.form.get('length', 'short')
-        language = request.form.get('language', 'en')
-        
         if not file or file.filename == '':
             logger.warning("Empty filename provided")
             return jsonify({'error': 'No file selected'}), 400
@@ -60,12 +54,34 @@ def upload_file():
             logger.warning(f"Invalid file type: {file.filename}")
             return jsonify({'error': 'Invalid file type. Only MP3 and MP4 files are allowed'}), 400
         
+        # Get form data
+        theme = request.form.get('theme', 'anonymous')
+        tone = request.form.get('tone', 'professional')
+        platform = request.form.get('platform', 'tiktok')
+        length = request.form.get('length', 'short')
+        language = request.form.get('language', 'en')
+        
+        # Save file
         filename = generate_secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         logger.info(f"Saving file to: {file_path}")
         file.save(file_path)
         
         file_type = file.filename.rsplit('.', 1)[1].lower()
+        
+        # Transcribe audio if it's an audio file
+        transcription = None
+        if file_type == 'mp3':
+            try:
+                logger.info("Transcribing audio file")
+                transcription = transcribe_audio(file_path)
+                logger.info("Audio transcription completed")
+            except Exception as e:
+                logger.error(f"Error during transcription: {str(e)}")
+                # Continue without transcription if it fails
+                pass
+        
+        # Generate content with transcription context if available
         logger.info(f"Generating content for file type: {file_type}")
         generated_content = generate_viral_content(
             theme=theme,
@@ -73,9 +89,11 @@ def upload_file():
             tone=tone,
             platform=platform,
             length=length,
-            language=language
+            language=language,
+            transcription=transcription
         )
         
+        # Save to database
         content = Content(
             original_filename=file.filename,
             stored_filename=filename,
@@ -89,8 +107,10 @@ def upload_file():
         
         return jsonify({
             'id': content.id,
-            'content': generated_content
+            'content': generated_content,
+            'transcription': transcription if transcription else None
         })
+        
     except RequestEntityTooLarge:
         logger.error("File size exceeds limit")
         return jsonify({'error': 'File size exceeds the 32MB limit'}), 413
