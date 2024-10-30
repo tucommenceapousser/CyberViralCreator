@@ -29,12 +29,19 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedFiles.innerHTML = '';
             fileList.classList.remove('d-none');
             
-            Array.from(files).forEach(file => {
+            Array.from(files).forEach((file, index) => {
                 const li = document.createElement('li');
                 li.className = 'list-group-item d-flex justify-content-between align-items-center';
                 li.innerHTML = `
-                    <span>${file.name}</span>
-                    <span class="badge bg-primary rounded-pill">${(file.size / (1024 * 1024)).toFixed(2)} MB</span>
+                    <div class="d-flex justify-content-between w-100">
+                        <span class="me-3">${file.name}</span>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary rounded-pill me-2">${(file.size / (1024 * 1024)).toFixed(2)} MB</span>
+                            <div class="progress" style="width: 100px; display: none;">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
                 `;
                 selectedFiles.appendChild(li);
                 
@@ -46,6 +53,30 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             fileList.classList.add('d-none');
         }
+    }
+
+    function updateProgress(filename, progress) {
+        const items = selectedFiles.querySelectorAll('.list-group-item');
+        items.forEach(item => {
+            if (item.querySelector('span').textContent.trim() === filename) {
+                const progressBar = item.querySelector('.progress');
+                const progressBarInner = progressBar.querySelector('.progress-bar');
+                progressBar.style.display = 'block';
+                progressBarInner.style.width = `${progress}%`;
+            }
+        });
+    }
+
+    function showBatchSummary(summary) {
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'alert alert-info mt-3';
+        summaryDiv.innerHTML = `
+            <h5 data-lang="batch_summary">Batch Summary</h5>
+            <p><strong data-lang="total_files">Total Files:</strong> ${summary.total}</p>
+            <p><strong data-lang="processed_files">Processed Files:</strong> ${summary.processed}</p>
+            <p><strong data-lang="failed_files">Failed Files:</strong> ${summary.failed}</p>
+        `;
+        result.insertBefore(summaryDiv, result.firstChild);
     }
 
     fileInput.addEventListener('change', updateFileList);
@@ -69,16 +100,12 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('files[]', file);
         });
         
-        // Add form fields including new parameters
-        formData.append('theme', document.getElementById('theme').value);
-        formData.append('tone', document.getElementById('tone').value);
-        formData.append('platform', document.getElementById('platform').value);
-        formData.append('length', document.getElementById('length').value);
-        formData.append('language', document.getElementById('language').value);
-        formData.append('content_format', document.getElementById('content_format').value);
-        formData.append('target_emotion', document.getElementById('target_emotion').value);
-        formData.append('call_to_action', document.getElementById('call_to_action').value);
-        formData.append('effect_intensity', document.getElementById('effect_intensity').value);
+        // Add form fields
+        const formFields = ['theme', 'tone', 'platform', 'length', 'language', 
+                          'content_format', 'target_emotion', 'call_to_action', 'effect_intensity'];
+        formFields.forEach(field => {
+            formData.append(field, document.getElementById(field).value);
+        });
         
         // Remove existing error alert if any
         const errorAlert = document.getElementById('errorAlert');
@@ -87,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         submitButton.disabled = true;
-        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing Files...';
         result.classList.add('d-none');
         uploadProgress.classList.remove('d-none');
         
@@ -101,6 +128,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (response.ok) {
                 try {
+                    // Update individual file progress
+                    data.files.forEach((file, index) => {
+                        updateProgress(file.original_filename, 100);
+                    });
+
+                    // Display batch summary
+                    showBatchSummary({
+                        total: data.files.length,
+                        processed: data.files.filter(f => f.processed_filename).length,
+                        failed: data.files.length - data.files.filter(f => f.processed_filename).length
+                    });
+
+                    // Display content and preview links
                     const content = JSON.parse(data.content);
                     contentDisplay.innerHTML = `
                         <h5>${content.title || 'Title not available'}</h5>
@@ -131,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showError('Error processing the generated content. Please try again.', true);
                 }
             } else {
-                const errorMessage = data.error || 'An error occurred while uploading the file';
+                const errorMessage = data.error || 'An error occurred while uploading the files';
                 showError(errorMessage, errorMessage.includes('OpenAI'));
             }
         } catch (error) {

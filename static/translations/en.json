@@ -45,5 +45,12 @@
     "preview_title": "Content Preview",
     "original_file": "Original File",
     "processed_file": "Processed File",
-    "back_button": "Back"
+    "back_button": "Back",
+    "processing_status": "Processing Status",
+    "processing_progress": "Processing Progress",
+    "batch_summary": "Batch Summary",
+    "total_files": "Total Files",
+    "processed_files": "Processed Files",
+    "failed_files": "Failed Files",
+    "remaining_files": "Remaining Files"
 }
