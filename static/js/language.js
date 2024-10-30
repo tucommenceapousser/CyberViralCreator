@@ -4,7 +4,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadTranslations(lang) {
         try {
-            const response = await fetch(`/translations/${lang}.json`);
+            const response = await fetch(`/static/translations/${lang}.json`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             translations = await response.json();
             updateContent();
         } catch (error) {

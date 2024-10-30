@@ -15,20 +15,22 @@ logger = logging.getLogger(__name__)
 def index():
     return render_template('index.html')
 
-@app.route('/translations/<language>.json')
+@app.route('/static/translations/<language>.json')
 def serve_translations(language):
     try:
-        translations_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'translations')
-        if not os.path.exists(translations_dir):
-            logger.error(f"Translations directory not found: {translations_dir}")
-            os.makedirs(translations_dir, exist_ok=True)
-            
-        translation_file = os.path.join(translations_dir, f'{language}.json')
-        if not os.path.exists(translation_file):
-            logger.error(f"Translation file not found: {translation_file}")
+        if language not in ['en', 'fr']:
             return jsonify({}), 404
             
-        return send_from_directory(translations_dir, f'{language}.json')
+        translations_path = os.path.join(app.static_folder, 'translations', f'{language}.json')
+        if not os.path.exists(translations_path):
+            logger.error(f"Translation file not found: {translations_path}")
+            return jsonify({}), 404
+            
+        return send_from_directory(
+            os.path.join(app.static_folder, 'translations'),
+            f'{language}.json',
+            mimetype='application/json'
+        )
     except Exception as e:
         logger.error(f"Error serving translation: {str(e)}")
         return jsonify({}), 500
@@ -47,9 +49,8 @@ def upload_file():
         
         file = request.files['file']
         theme = request.form.get('theme', 'anonymous')
-        logger.info(f"Processing file: {file.filename} with theme: {theme}")
         
-        if file.filename == '':
+        if not file or file.filename == '':
             logger.warning("Empty filename provided")
             return jsonify({'error': 'No file selected'}), 400
         
